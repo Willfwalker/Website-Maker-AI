@@ -34,12 +34,12 @@ async function generateWebsitePlan(userPrompt) {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const initialPrompt = `
-    You are a web development expert.
+    You are a Flask web development expert.
     Based on the website request: "${userPrompt}"
     
     Provide a JSON structure containing:
     1. A brief overview of the website's purpose
-    2. A complete list of HTML and CSS files needed
+    2. A complete list of Python, HTML, and CSS files needed
     3. A description of the styling and layout approach
     
     Format as a valid JSON object with this structure:
@@ -47,16 +47,28 @@ async function generateWebsitePlan(userPrompt) {
         "overview": "Brief description of the website",
         "files": [
             {
-                "path": "index.html",
-                "description": "Main HTML page with content structure"
+                "path": "app.py",
+                "description": "Main Flask application file with routes and configuration"
             },
             {
-                "path": "styles/main.css", 
+                "path": "templates/base.html",
+                "description": "Base template with common layout elements"
+            },
+            {
+                "path": "templates/index.html",
+                "description": "Main page template extending base.html"
+            },
+            {
+                "path": "static/css/main.css",
                 "description": "Main stylesheet with colors, typography and layout"
             },
             {
-                "path": "styles/responsive.css",
+                "path": "static/css/responsive.css",
                 "description": "Additional styles for responsive design"
+            },
+            {
+                "path": "requirements.txt",
+                "description": "Python package dependencies"
             }
         ],
         "styling": {
@@ -74,20 +86,24 @@ async function generateWebsitePlan(userPrompt) {
         const fileContents = {};
         for (const file of plan.files) {
             const codePrompt = `
-            You are generating code for a file in a Spas and salon website.
-            Generate the complete code for: ${file.path}
+            You are a web development expert.
+            Based on the file requirements:
+            Path: ${file.path}
             Description: ${file.description}
-            Website overview: ${plan.overview}
+            Website Overview: ${plan.overview}
             
-            Important instructions:
-            1. For package.json files, include all necessary dependencies and scripts
-            2. For configuration files, include all required settings
-            3. For environment files, include all necessary variables
-            4. Generate only the actual code, no comments or explanations
-            5. Do not wrap the code in markdown or code blocks
-            6. Include all necessary imports and exports
-            7. For backend files, ensure Express, MongoDB, and authentication dependencies
-            8. For frontend files, ensure React, Redux, and UI framework dependencies`;
+            Generate the complete code for this file following these requirements:
+            1. Include all necessary imports and dependencies
+            2. Follow best practices for the file type
+            3. Ensure code is production-ready and well-structured
+            4. Include proper error handling where needed
+            
+            Important:
+            - Generate only the actual code
+            - Generate all necessary code for the file
+            - Do not include comments or explanations
+            - Do not wrap the code in markdown or code blocks
+            - Ensure the code aligns with modern web development standards`;
 
             const codeResult = await model.generateContent(codePrompt);
             // Clean the generated code before storing it
@@ -117,14 +133,14 @@ async function createDirectory(dirPath) {
 async function logToCSV(projectName, duration, success) {
     const csvPath = path.join(process.cwd(), 'generation-times.csv');
     const timestamp = new Date().toISOString();
-    const csvLine = `${timestamp},${projectName},${duration},${success}\n`;
+    const csvLine = `${timestamp},${projectName},${duration},${success},v2\n`;
 
     try {
         // Check if file exists, if not create with headers
         try {
             await fs.access(csvPath);
         } catch {
-            await fs.writeFile(csvPath, 'timestamp,project_name,duration_seconds,success\n');
+            await fs.writeFile(csvPath, 'timestamp,project_name,duration_seconds,success,version\n');
         }
         
         // Append the new data
